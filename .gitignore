@@ -1,0 +1,13 @@
+# backend ignore
+
+/backend/node_modules
+/backend/generated/prisma
+/backend/prisma/migrations
+/backend/.env
+
+#frontend ignore
+
+/frontend/node_modules
+/frontend/.next/
+/frontend/.env
+/frontend/next-env.d.ts
