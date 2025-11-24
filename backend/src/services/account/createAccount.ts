@@ -19,7 +19,7 @@ export async function createAccount(name: string, email: string, password: strin
         }
     })
 
-    const token = createToken(user.id, user.email);
+    const token = createToken(user.id);
 
     return {status: 201, body: {id: user.id, name: user.name, email: user.email, creation: user.creation, token}}
   } catch (error: any) {

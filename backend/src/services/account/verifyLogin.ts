@@ -22,7 +22,7 @@ export async function verifyLogin(email: string, password: string) {
       return {status: 401, body: {error: "Invalid credentials" }}
     }
 
-    const token = await createToken(user.id, user.email);
+    const token = await createToken(user.id);
     return {status: 200, body: {id: user.id, name: user.name, email: user.email, token}}
   } catch (error) {
     return {status: 500, body: {error: "Something went wrong" }}

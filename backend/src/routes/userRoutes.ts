@@ -4,6 +4,7 @@ import { verifyLogin } from "../services/account/verifyLogin"
 import { authasync } from "../middleware/auth"
 import { changeName } from "../services/account/changeName";
 import { changePassword } from "../services/account/changePassword";
+import { changeEmail } from "../services/account/changeEmail";
 
 const router = Router();
 
@@ -34,7 +35,13 @@ router.patch("/me/name", authasync, async (req, res) => {
 })
 
 router.patch("/me/password", authasync, async (req, res) => {
-  const result = await changePassword(req.body.password, req.body.newPassword , req.user!.password, req.user!.id);
+  const result = await changePassword(req.body.enteredPassword, req.body.newPassword , req.user!.password, req.user!.id);
+  res.status(result.status).json(result.body);
+});
+
+router.patch("/me/email", authasync, async (req, res) => {
+  const result = await changeEmail(req.body.enteredPassword, req.body.newEmail , req.user!.password, req.user!.id);
+  res.status(result.status).json(result.body);
 });
 
 
