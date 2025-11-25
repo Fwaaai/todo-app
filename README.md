@@ -14,7 +14,13 @@ cd frontend
 npm install
 ```
 
-You need to run these once.
+Please fill in /backend/.env with the following: 
+
+DATABASE_URL="postgresql://[username]:[password]@localhost:[port]/[database name]?schema=public"
+
+SECRET_KEY=[secret key for password hashing]
+
+Then, you need to run these once.
 ```bash
 cd backend
 npx prisma generate
@@ -23,13 +29,6 @@ npx prisma migrate dev
 
 
 # Use
-
-Please fill in /backend/.env with the following: 
-
-DATABASE_URL="postgresql://[username]:[password]@localhost:[port]/[database name]?schema=public"
-
-SECRET_KEY=[secret key for password hashing]
-
 ESModules syntax is used.
 CommonJS syntax is NOT USED. If you switch type to CommonJS in config, this project WILL BREAK.
 
@@ -66,4 +65,5 @@ DB:
   PostgreSQL
 
   
+
 
