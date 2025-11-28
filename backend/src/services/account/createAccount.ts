@@ -7,6 +7,29 @@ export async function createAccount(name: string, email: string, password: strin
     if (!name || !email || !password) {
       return {status: 400, body: {error: "Missing required fields" }}
     }
+
+    if (email.trim() === "" || password.trim() === "" || name.trim() === "") {
+      return {status: 400, body: {error: "Name, email, and password cannot be empty" }}
+    }
+
+    if (email.includes("@") && email.includes(".") === false) {
+      return {status: 400, body: {error: "Invalid email format" }}
+    }
+
+    if (password.length < 8) {
+      return {status: 400, body: {error: "Password must be at least 8 characters long" }}
+    }
+    if (!/[a-z]/.test(password) || !/[A-Z]/.test(password)) {
+      return {status: 400, body: {error: "Password must contain both uppercase and lowercase letters" }}
+    }
+    if (!/[0-9]/.test(password)) {
+      return {status: 400, body: {error: "Password must include at least one number" }}
+    }
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+      return {status: 400, body: {error: "Password must have at least one special character" }}
+    }
+
+
     const hashed = await hashPass(password);
     const creation = new Date();
     console.log(`${name}, ${email}, ${hashed}, ${creation}`);

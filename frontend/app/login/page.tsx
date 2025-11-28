@@ -1,14 +1,28 @@
+"use client";
+
+import { useRouter } from 'next/navigation'; // app router for Next.js 13+
 import Link from "next/link";
 
 export default function Login() {
+  const router = useRouter();
+  function  handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    // check email and password validity here
+    const mockToken = "mock-token";
+    localStorage.setItem("token", mockToken);
+
+    router.push("/me/profile"); // redirect to profile page after login
+  }
+
+  
   return (
     <div className="min-h-screen bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
       <div className="backdrop-blur-xl bg-white/10 border border-white/20 shadow-2xl rounded-2xl p-20 max-w-xl w-full text-center">
         <h1 className="text-4xl font-bold text-white mb-6 drop-shadow">
-          Login to Your Account
+          Log in to Your Account
         </h1>
 
-        <form className="flex flex-col gap-4 mb-6">
+        <form className="flex flex-col gap-4 mb-6" noValidate onSubmit ={handleSubmit}>
           <input
             type="email"
             placeholder="Email"

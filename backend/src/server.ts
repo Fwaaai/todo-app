@@ -3,9 +3,13 @@ import { prisma } from "./lib/prisma";
 import { hashPass } from "./utils/hashPass";
 import userRoutes from "./routes/userRoutes";
 import { setJson } from "./middleware/setJson";
+import cors from "cors";
+
 
 
 const app = express();
+
+app.use(cors({ origin: "http://localhost:3000"}));
 app.use(express.json());
 app.use(setJson);
 

@@ -15,16 +15,22 @@ export default function Home() {
               Create Account
             </button>
           </Link>
-          <button className="px-6 py-3 rounded-xl bg-white/20 hover:bg-white/30 text-white font-semibold transition backdrop-blur-lg shadow-lg">
-            Login
-          </button>
+          <Link href="/login">
+            <button className="px-6 py-3 rounded-xl bg-white/20 hover:bg-white/30 text-white font-semibold transition backdrop-blur-lg shadow-lg">
+              Login
+            </button>
+          </Link>
         </div>
 
         <p className="text-slate-200 leading-relaxed">
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam ac
-          scelerisque libero. Vestibulum euismod, nisl eget consectetur
-          elementum, nunc nisl aliquam nunc, eget consequat lorem ipsum in
-          massa.
+          This is a simple todo application built with a Next.js frontend and an
+          Express.js backend. It features user authentication, allowing you to
+          create an account and manage your tasks securely. Feel free to
+          explore the code on{" "}
+          <Link href="https://github.com/Fwaaai/todo-app" className="underline">
+            GitHub
+          </Link>
+          .
         </p>
       </div>
     </div>
