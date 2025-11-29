@@ -13,7 +13,7 @@ datasource db {
   provider = "postgresql"
 }
 
-model User {
+model Users {
   id Int @id @default(autoincrement())
   email String @unique
   password String
@@ -28,6 +28,6 @@ model Todo {
   title String
   content String
   done Boolean @default(false)
-  which User @relation(fields: [whichId], references: [id])
+  which Users @relation(fields: [whichId], references: [id])
   whichId Int
 }

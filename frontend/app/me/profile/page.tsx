@@ -2,22 +2,36 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { isAuth } from "../isAuth";
+import { useState } from "react";
 import { Sidebar } from "../components/sidebar";
 import Link from "next/link";
-
-//import data from backend
-
-const user = "John Doe";
-const createdAt = new Date().toLocaleDateString();
+import axios from "axios";
 
 export default function ProfilePage() {
   const router = useRouter();
-
+  const [name, setName] =  useState("User");
+  const [createdAt, setCreatedAt] = useState("");
+  
   useEffect(() => {
-    if (!isAuth()) {
-      router.push("/login"); // redirect if not authenticated
+    async function loadProfile() {
+      try {
+        const response = await axios.get("http://localhost:8000/api/users/me", {
+          withCredentials: true,
+        });
+        if (response.status === 200) {
+          const data = response.data;
+          setName(data.name);
+          const date = new Date(data.creation);
+          setCreatedAt(date.toLocaleDateString());
+          // Update user and createdAt variables
+        }
+      } catch (error) {
+        console.error("Error fetching profile data:", error);
+        router.push("/login");
+      }
+
     }
+    loadProfile();
   }, [router]);
 
   return (
@@ -25,7 +39,7 @@ export default function ProfilePage() {
       <Sidebar />
 
       <div className="flex-1 p-12 space-y-10">
-        <h1 className="text-4xl font-bold">Hi, {user}</h1>
+        <h1 className="text-4xl font-bold">Hi, {name}</h1>
 
         <p className="text-xl text-slate-300">
           Your account was created on: <span className="font-semibold text-white">{createdAt}</span>

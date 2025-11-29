@@ -2,34 +2,71 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { isAuth } from "../../isAuth";
 import { Sidebar } from "../../components/sidebar";
 import { useState } from "react";
 import { useToastStore } from "@/lib/zustand/store";
+import axios from "axios";
 //import data from backend
 
-const user = "John Doe";
 
 export default function ProfilePage() {
   const router = useRouter();
+  const [user, setUser] = useState("");
   const [name, setName] = useState("");
   const [ failedName, setFailedName ] = useState(false);
+  const [error, setError] = useState("");
   const show = useToastStore((state) => state.show);
 
   useEffect(() => {
-    if (!isAuth()) {
-      router.push("/login"); // redirect if not authneticated
+    async function loadProfile() {
+      try {
+        const response = await axios.get("http://localhost:8000/api/users/me", {
+          withCredentials: true,
+        });
+        if (response.status === 200) {
+          const data = response.data;
+          setUser(data.name);
+        }
+      } catch (error) {
+        console.error("Error fetching profile data:", error);
+        router.push("/login");
+      }
+
     }
+    loadProfile();
   }, [router]);
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const nameFail = name.trim() === "";
     setFailedName(nameFail);
     if (nameFail) return;
-    
-
-    const nameUpdated = true; // mock success
+    let nameUpdated = false;
+    try {
+      const { status } = await axios.patch(
+        "http://localhost:8000/api/users/me/name",
+        {
+          name: name.trim(),
+        },
+        { withCredentials: true }
+      );
+      if (status !== 200) {
+        setError("Something went wrong");
+      } else{
+        setError("");
+        nameUpdated = true;
+      }
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        const status = error.response.status;
+        if (status === 400) {
+          setError("Invalid name. Please check your input.");
+        } else if (status === 401) {
+          setError("Unauthorized. Please log in again.");
+          router.push("/login");
+        }
+      }
+    }
 
     if (!nameUpdated) {
       show("Name update failed!", "error");
@@ -37,7 +74,7 @@ export default function ProfilePage() {
       show("Name updated!", "success");
     }
 
-    router.push("/me/account"); // redirect after successful name change 
+    router.push("/me/account"); 
   }
 
   return (
@@ -45,6 +82,7 @@ export default function ProfilePage() {
       <Sidebar />
       <form onSubmit={handleSubmit} className="flex-1 p-12" noValidate>
         <div className="flex-1 p-12 space-y-10">
+          <p>{error}</p>
           <h1 className="text-4xl font-bold">Change Name for {user}</h1>
           <div className="flex flex-col gap-6 mt-10 w-1/2">
             <label className="flex flex-col gap-2 text-lg">
