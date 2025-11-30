@@ -2,13 +2,12 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { isAuth } from "../../isAuth";
 import { Sidebar } from "../../components/sidebar";
 import { useState } from "react";
 import { useToastStore } from "@/lib/zustand/store";
+import axios from "axios";
 //import data from backend
 
-const user = "John Doe";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -17,13 +16,27 @@ export default function ProfilePage() {
   const [ password, setPassword ] = useState("");
   const [ failedPassword, setFailedPassword ] = useState(false);
   const [ passwordRequirements, setPasswordRequirements ] = useState([false, false, false, false]);
+  const [ user, setUser ] = useState("");
+  const [ error, setError ] = useState("");
 
   const show = useToastStore((state) => state.show);
 
   useEffect(() => {
-    if (!isAuth()) {
-      router.push("/login"); // redirect if not authneticated
+    async function loadProfile() {
+      try {
+        const response = await axios.get("http://localhost:8000/api/users/me", {
+          withCredentials: true,
+        });
+        if (response.status === 200) {
+          const data = response.data;
+          setUser(data.name);
+        }
+      } catch (error) {
+        console.error("Error fetching profile data:", error);
+        router.push("/login");
+      }
     }
+    loadProfile();
   }, [router]);
 
   function validatePassword(value: string) {
@@ -38,7 +51,7 @@ export default function ProfilePage() {
     setFailedNewPassword(!requirements.every(Boolean));
   }
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const requirements = [
         newPassword.length >= 8,
@@ -51,13 +64,48 @@ export default function ProfilePage() {
     setFailedNewPassword(newPasswordFail);
     if (newPasswordFail) return;
     
-    //check old password validity
-    setFailedPassword(false);
+    let passwordUpdated = false;
+    try {
+      const { status } = await axios.patch(
+        "http://localhost:8000/api/users/me/password",
+        {
+          newPassword: newPassword.trim(),
+          enteredPassword: password.trim(),
+        },
+        {
+          withCredentials: true,
+        }
+      );
+      if (status === 200) {
+        passwordUpdated = true;
+      } else {
+        setError("Something went wrong");
+      }
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        const status = error.response.status;
+        if (status === 400) {
+          setError("Failed to update password. Please check your inputs.");
+        } else if (status === 401) {
+          setError("Unauthorized. Please log in again.");
+          router.push("/login");
+        } else if (status === 403) {
+          setError("Wrong password. Please try again.");
+          setFailedPassword(true);
+        }
+        else {
+          setError("Something went wrong. Please try again later.");
+        }
+      }
 
-    if (failedPassword) return;
-    // submit new password to backend here
+      
+    } // redirect after successful email change
+    if (!passwordUpdated) {
+        show("Email update failed!", "error");
+      } else {
+        show("Email updated!", "success");
+    }
 
-    const passwordUpdated = true; // mock success
 
     if (!passwordUpdated) {
       show("Password update failed!", "error");
@@ -74,6 +122,7 @@ export default function ProfilePage() {
       <form onSubmit={handleSubmit} className="flex-1 p-12" noValidate>
         <div className="flex-1 p-12 space-y-10">
           <h1 className="text-4xl font-bold">Change Password for {user}</h1>
+          <p>{error}</p>
           <div className="flex flex-col gap-6 mt-10 w-1/2">
             <label className="flex flex-col gap-2 text-lg">
               New Password:

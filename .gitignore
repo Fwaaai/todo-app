@@ -4,6 +4,13 @@
 /backend/generated/prisma
 /backend/prisma/migrations
 /backend/.env
+/backend/logs
+/backend/.env.local
+/backend/.DS_Store
+/backend/npm-debug.log*
+/backend/yarn-error.log*
+/backend/pnpm-debug.log*
+/backend/.turbo
 
 #frontend ignore
 
@@ -11,3 +18,9 @@
 /frontend/.next/
 /frontend/.env
 /frontend/next-env.d.ts
+/frontend/.env.local
+/frontend/.DS_Store
+/frontend/npm-debug.log*
+/frontend/yarn-error.log*
+/frontend/pnpm-debug.log*
+/frontend/.turbo

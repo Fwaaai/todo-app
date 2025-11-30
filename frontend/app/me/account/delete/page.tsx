@@ -6,6 +6,7 @@ import { isAuth } from "../../isAuth";
 import { Sidebar } from "../../components/sidebar";
 import { useState } from "react";
 import { useToastStore } from "@/lib/zustand/store";
+import axios from "axios";
 //import data from backend
 
 const user = "John Doe";
@@ -14,17 +15,37 @@ export default function ProfilePage() {
   const router = useRouter();
   const [ password, setPassword ] = useState("");
   const [ failedPassword, setFailedPassword ] = useState(false);
+  const [ error, setError ] = useState("");
   
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    //check password validity
-    setFailedPassword(false);
-
-    if (failedPassword) return;
-    // submit delete account to backend here
-
-    router.push("/"); // redirect after successful email change 
+    try {
+      const { status } = await axios.post("http://localhost:8000/api/users/me/delete", {
+      enteredPassword: password.trim()
+    }, { withCredentials: true });
+      if (status === 204) {
+        router.push("/");
+      } else {
+        setError("Something went wrong");
+        router.push("/");
+      }
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        const status = error.response.status;
+        if (status === 400) {
+          setError("Failed to delete account. Please check your inputs.");
+        } else if (status === 401) {
+          setError("Unauthorized. Please log in again.");
+          router.push("/login");
+        } else if (status === 403) {
+          setError("Invalid credentials. Please try again.");
+        }
+      } else {
+        setError("Something went wrong. Please try again later.");
+      }
+    }
+    
   }
 
   return (
@@ -36,6 +57,7 @@ export default function ProfilePage() {
           <p className="text-lg">Are you sure you want to delete your account?</p>
           <p className="text-lg">We hate to see you go...but we hope we can see you back soon.</p>
           <p className="text-lg">Once you delete your account, there is no going back.</p>
+          <p>{error}</p>
           <label className="flex flex-col gap-2 text-lg">
               Because this is a sensitive change, we require your password.
               <input
@@ -50,7 +72,7 @@ export default function ProfilePage() {
 
           <div className="flex flex-col gap-6 mt-10 w-1/2">
             <button className="px-8 py-4 rounded-xl bg-white/10 backdrop-blur-lg border border-white/20 hover:bg-white/20 transition text-lg shadow-lg">
-              Update Email
+              Delete Account
             </button>
           </div>
         </div>

@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import axios from "axios";
 import { Sidebar } from "../components/sidebar";
-import { isAuth } from "../isAuth";
 
 type Task = {
   id: number;
@@ -12,6 +12,10 @@ type Task = {
   done: boolean;
   hoverClass: string;
 };
+
+type ApiTask = Omit<Task, "hoverClass">;
+
+const API_BASE = "http://localhost:8000/api/tasks";
 
 const hoverEffects = [
   "hover:-translate-y-1 hover:shadow-2xl hover:bg-white/15",
@@ -29,67 +33,116 @@ export default function TodosPage() {
   const router = useRouter();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [showNewTask, setShowNewTask] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [newContent, setNewContent] = useState("");
   const [formError, setFormError] = useState("");
 
   useEffect(() => {
-    if (!isAuth()) {
-      router.push("/login");
-    }
+    const fetchTasks = async () => {
+      try {
+        const { data } = await axios.get<{ tasks: ApiTask[] }>(API_BASE, {
+          withCredentials: true,
+        });
+        const fetched = (data.tasks ?? []).map((task) => ({
+          ...task,
+          hoverClass: randomHoverEffect(),
+        }));
+        setTasks(fetched);
+        setError("");
+      } catch (err) {
+        if (axios.isAxiosError(err) && err.response?.status === 401) {
+          router.push("/login");
+          return;
+        }
+        setError("Couldn't load tasks. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTasks();
   }, [router]);
-
-  useEffect(() => {
-    // Simulate fetching todos
-    const timer = setTimeout(() => {
-      setTasks([
-        { id: 1, title: "Plan sprint", content: "Outline deliverables for next week", done: false, hoverClass: randomHoverEffect() },
-        { id: 2, title: "Code review", content: "Review PR #42 with the team", done: true, hoverClass: randomHoverEffect() },
-        { id: 3, title: "Refactor auth", content: "Extract reusable hooks for auth state", done: false, hoverClass: randomHoverEffect() },
-      ]);
-      setLoading(false);
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, []);
 
   const doneCount = useMemo(() => tasks.filter((task) => task.done).length, [tasks]);
   
-  const toggleDone = (id: number) => {
-    setTasks((prev) =>
-      prev.map((task) =>
-        task.id === id
-          ? { ...task, done: !task.done }
-          : task
-      )
-    );
+  const toggleDone = async (id: number) => {
+    try {
+      const { data } = await axios.patch<{ task: ApiTask }>(
+        `${API_BASE}/toggle`,
+        { id },
+        { withCredentials: true }
+      );
+      const updatedTask = data.task;
+      setTasks((prev) =>
+        prev.map((task) =>
+          task.id === id ? { ...task, done: updatedTask?.done ?? !task.done } : task
+        )
+      );
+      setError("");
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response?.status === 401) {
+        router.push("/login");
+        return;
+      }
+      setError("Couldn't update the task. Please try again.");
+    }
   };
 
-  const deleteTask = (id: number) => {
-    setTasks((prev) => prev.filter((task) => task.id !== id));
+  const deleteTask = async (id: number) => {
+    try {
+      await axios.post(
+        `${API_BASE}/delete`,
+        { id },
+        { withCredentials: true }
+      );
+      setTasks((prev) => prev.filter((task) => task.id !== id));
+      setError("");
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response?.status === 401) {
+        router.push("/login");
+        return;
+      }
+      setError("Couldn't delete the task. Please try again.");
+    }
   };
 
-  const addTask = () => {
+  const addTask = async () => {
     if (!newTitle.trim() || !newContent.trim()) {
       setFormError("Please provide both a title and content.");
       return;
     }
 
-    const nextId = Math.max(0, ...tasks.map((t) => t.id)) + 1;
-    const nextTask: Task = {
-      id: nextId,
-      title: newTitle.trim(),
-      content: newContent.trim(),
-      done: false,
-      hoverClass: randomHoverEffect(),
-    };
+    try {
+      const { data } = await axios.post<{ task: ApiTask }>(
+        API_BASE,
+        {
+          title: newTitle.trim(),
+          content: newContent.trim(),
+        },
+        { withCredentials: true }
+      );
 
-    setTasks((prev) => [...prev, nextTask]);
-    setNewTitle("");
-    setNewContent("");
-    setFormError("");
-    setShowNewTask(false);
+      const created = data.task;
+      if (created) {
+        setTasks((prev) => [
+          ...prev,
+          { ...created, hoverClass: randomHoverEffect() },
+        ]);
+      }
+      setNewTitle("");
+      setNewContent("");
+      setFormError("");
+      setError("");
+      setShowNewTask(false);
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response?.status === 401) {
+        router.push("/login");
+        return;
+      }
+      setFormError("Couldn't create the task. Please try again.");
+    }
   };
 
   return (
@@ -103,6 +156,7 @@ export default function TodosPage() {
             <p className="text-slate-300 mt-2">
               {loading ? "Loading tasks..." : `${doneCount}/${tasks.length} done`}
             </p>
+            {error && <p className="text-red-400 mt-2 text-sm">{error}</p>}
           </div>
           <button
             onClick={() => setShowNewTask(true)}
@@ -148,7 +202,6 @@ export default function TodosPage() {
                 <span className="px-3 py-1 rounded-full bg-black/30 border border-white/10">
                   {task.done ? "Done" : "In progress"}
                 </span>
-                <span className="opacity-0 group-hover:opacity-100 transition">Hover magic ✨</span>
               </div>
             </article>
           ))}

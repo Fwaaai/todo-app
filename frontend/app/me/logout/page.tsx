@@ -1,24 +1,31 @@
 "use client";
-import { useRouter } from 'next/navigation';
-import { useEffect } from 'react'; 
-export default function LogoutPage() {
-  // Clear authentication token from local storage
-  if (typeof window !== "undefined") {
-    localStorage.removeItem("token");
-  }
+import axios from "axios";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
+export default function LogoutPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // This runs once after the first render
-    console.log('Component has rendered!');
+    const performLogout = async () => {
+      try {
+        await axios.post(
+          "http://localhost:8000/api/users/logout",
+          {},
+          { withCredentials: true }
+        );
+      } catch (error) {
+        console.error("Error clearing auth cookie:", error);
+      } finally {
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("token");
+        }
+        router.push("/login");
+      }
+    };
 
-    // You can also do things like DOM manipulation here
-    const element = document.getElementById('my-div');
-    console.log(element);
-    router.push('/'); // Redirect to login page after logout
+    performLogout();
+  }, [router]);
 
-  }, []); // empty array = run once
-
-  return <p >Logging out...</p>;
+  return <p>Logging out...</p>;
 }

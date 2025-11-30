@@ -2,7 +2,7 @@ import { prisma } from "../../lib/prisma";
 import { verifyPassword, hashPass } from "../../utils/hashPass";
 import { logResponse } from "../../utils/logProcess";
 import chalk from "chalk";
-export async function changePassword(password: string, newPassword: string, hashed: string, id: number, reqid: number) {
+export async function deleteAccount(password: string, hashed: string, id: number, reqid: number) {
   console.log(chalk.blue(`[${new Date().toISOString()}][ReqID=${reqid}] Password verification started for UserID=${id}.`));
   const matchPass = await verifyPassword(password, hashed);
 
@@ -11,18 +11,16 @@ export async function changePassword(password: string, newPassword: string, hash
     logResponse(403, "Invalid credentials.", reqid);
     return { status: 403, body: { error: "Invalid credentials" } };
   }
+
   console.log(chalk.blue(`[${new Date().toISOString()}][ReqID=${reqid}] Password verified for UserID=${id}.`));
-  console.log(chalk.blue(`[${new Date().toISOString()}][ReqID=${reqid}] Hashing new password for UserID=${id}.`));
-  const newHashed = await hashPass(newPassword);
 
   try {
-    console.log(chalk.blue(`[${new Date().toISOString()}][ReqID=${reqid}] Updating password for UserID=${id}...`));
-    const user = await prisma.user.update({
+    console.log(chalk.blue(`[${new Date().toISOString()}][ReqID=${reqid}] Deleting account for UserID=${id}...`));
+    const user = await prisma.user.delete({
       where: { id },
-      data: { password: newHashed },
     });
-    logResponse(200, "Password changed successfully.", reqid);
-    return { status: 200, body: { id: user.id, name: user.name, email: user.email, creation: user.creation } };
+    logResponse(204, "Account deleted successfully.", reqid);
+    return { status: 204, body: { } };
   } catch (error) {
     logResponse(500, "Something went wrong.", reqid);
     return { status: 500, body: { error: "Something went wrong" } };

@@ -11,7 +11,7 @@ export function processID(req: Request, res: Response, next: NextFunction) {
   req.reqid = reqid;
   console.log(
     chalk.grey(
-      `[${new Date().toISOString()}][ReqID=${reqid}] Started processing request.`
+      `\n[${new Date().toISOString()}][ReqID=${reqid}] Started processing request ${req.method} to ${req.originalUrl}`
     )
   );
   running.push(reqid);
@@ -22,7 +22,7 @@ export function endProcessID(reqid: number) {
   running = running.filter((id) => id !== reqid);
   console.log(
     chalk.grey(
-      `[${new Date().toISOString()}][ReqID=${reqid}] Finished processing request.`
+      `[${new Date().toISOString()}][ReqID=${reqid}] Finished processing request.\n`
     )
   );
   console.log(

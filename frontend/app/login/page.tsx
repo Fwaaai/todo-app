@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'; // app router for Next.js 13+
 import Link from "next/link";
 import axios from "axios";
 import { useState } from "react";
+import { useEffect } from "react";
 
 
 export default function Login() {
@@ -11,6 +12,23 @@ export default function Login() {
   const [error, setError] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
+  useEffect(() => {
+    async function loadProfile() {
+      try {
+        const response = await axios.get("http://localhost:8000/api/users/me", {
+          withCredentials: true,
+        });
+        if (response.status === 200) {
+          router.push("/me/profile");
+        }
+      } catch (error) {
+        console.error("Indeed, not logged in", error);
+      }
+
+    }
+    loadProfile();
+  }, [router]);
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     try {

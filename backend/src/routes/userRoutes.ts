@@ -6,6 +6,7 @@ import { changeName } from "../services/account/changeName";
 import { changePassword } from "../services/account/changePassword";
 import { changeEmail } from "../services/account/changeEmail";
 import { logResponse } from "../utils/logProcess";
+import { deleteAccount } from "../services/account/deleteAccount";
 import { endProcessID } from "../middleware/processID";
 import chalk from "chalk";
 const router = Router();
@@ -38,6 +39,18 @@ router.post("/", async (req, res) => {
   }
   endProcessID(reqid);
 })
+
+router.post("/logout", (req, res) => {
+  const reqid = req.reqid!;
+  res.clearCookie("auth_token", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+  });
+  console.log(chalk.blue(`[${new Date().toISOString()}][ReqID=${reqid}] Cleared auth cookie, user logged out.`));
+  endProcessID(reqid);
+  res.status(200).json({ message: "Logged out" });
+});
 
 router.post("/login", async (req, res) => {
   const { email, password} = req.body
@@ -77,6 +90,13 @@ router.get("/me", authasync, (req, res) => {
   res.status(200).json({id, name, email, creation});
 })  
 
+router.post("/me/delete", authasync, async (req, res) => {
+  console.log(chalk.blue(`[${new Date().toISOString()}][ReqID=${req.reqid}] User account deletion for UserID=${req.user!.id}.`));
+  const result = await deleteAccount(req.body.enteredPassword, req.user!.password, req.user!.id, req.reqid!);
+  endProcessID(req.reqid!);
+  res.status(result.status).json(result.body);
+});
+
 router.patch("/me/name", authasync, async (req, res) => {
   console.log(chalk.blue(`[${new Date().toISOString()}][ReqID=${req.reqid}] Received request to change name for UserID=${req.user!.id}.`));
   console.log(chalk.blue(`[${new Date().toISOString()}][ReqID=${req.reqid}] New name: ${req.body.name}`));
@@ -86,7 +106,10 @@ router.patch("/me/name", authasync, async (req, res) => {
 })
 
 router.patch("/me/password", authasync, async (req, res) => {
-  const result = await changePassword(req.body.enteredPassword, req.body.newPassword , req.user!.password, req.user!.id);
+  console.log(chalk.blue(`[${new Date().toISOString()}][ReqID=${req.reqid}] Received request to change password for UserID=${req.user!.id}.`));
+  console.log(chalk.blue(`[${new Date().toISOString()}][ReqID=${req.reqid}] New password: [HIDDEN]`));
+  const result = await changePassword(req.body.enteredPassword, req.body.newPassword , req.user!.password, req.user!.id, req.reqid!);
+  endProcessID(req.reqid!);
   res.status(result.status).json(result.body);
 });
 

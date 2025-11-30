@@ -1,69 +1,76 @@
-# Prerequisites
-Node.js 22
-PostgreSQL 18
+# Todo App
 
-# Installation
+Full-stack todo app with a Next.js frontend and an Express + Prisma backend. Users authenticate with a JWT stored in an httpOnly cookie and manage personal tasks.
 
+## Prerequisites
+- Node.js 22
+- PostgreSQL 18
+
+## Project structure
+- `backend/` — Express API, Prisma client, and logging utilities
+- `frontend/` — Next.js app router UI
+- `backend/prisma/schema.prisma` — data model for users and todos
+- `backend/logs/` — request/response logs (gitignored)
+
+## Environment variables
+Backend (`backend/.env`):
+- `DATABASE_URL="postgresql://<user>:<password>@localhost:<port>/<database>?schema=public"`
+- `SECRET_KEY=<jwt signing secret>`
+- `NODE_ENV=production|development` (controls cookie security flags)
+
+Frontend (`frontend/.env`):
+- `ALLOWED_ORIGINS='["http://localhost:3000"]'` (JSON array used by Next.js `allowedDevOrigins`)
+
+## Setup
+
+Clone the repo, and then in the root folder:
+
+### Backend
 ```bash
-git clone https://github.com/Fwaaai/todo-app/
-cd todo-app
 cd backend
 npm install
-cd ..
-cd frontend
-npm install
-```
-
-Please fill in /backend/.env with the following: 
-
-DATABASE_URL="postgresql://[username]:[password]@localhost:[port]/[database name]?schema=public"
-
-SECRET_KEY=[secret key for password hashing]
-
-Then, you need to run these once.
-```bash
-cd backend
 npx prisma generate
 npx prisma migrate dev
+npm run dev
 ```
 
-
-# Use
-ESModules syntax is used.
-CommonJS syntax is NOT USED. If you switch type to CommonJS in config, this project WILL BREAK.
-
-By default, backend runs at port 8000 and frontend at port 3000.
-Make sure your DB is running when you run the backend.
-
-Both backend and frontend are run using `npm run dev`.
-Run them separately:
+### Frontend
 ```bash
 cd frontend
+npm install
+# set ALLOWED_ORIGINS in .env
 npm run dev
 ```
 
-```bash
-cd backend
-npm run dev
-```
+## Running locally
+- Backend listens on `http://localhost:8000`, frontend on `http://localhost:3000`.
+- Ensure PostgreSQL is running and reachable via `DATABASE_URL` before starting the backend.
+- Frontend and backend rely on CORS with credentials enabled; keep origins aligned with `ALLOWED_ORIGINS` and backend CORS config.
 
-# Description
+## API overview
+Auth (cookie-based):
+- `POST /api/users` — register; sets `auth_token` cookie and returns user data
+- `POST /api/users/login` — login; sets `auth_token` cookie
+- `POST /api/users/logout` — clear cookie
+- `GET /api/users/me` — current user profile
+- `PATCH /api/users/me/name` — change display name
+- `PATCH /api/users/me/email` — change email
+- `PATCH /api/users/me/password` — change password
+- `POST /api/users/me/delete` — delete account
 
-This is a training project for me. Feel free to use it around, play around with it, or use it for courses (idk, maybe you'd want that). Remember that I did not use the most secure methods around (although they are more secure than a lot of the old websites) -- bcrypt and JWT are mainly used for password hashing and auth. 
+Tasks (auth required):
+- `GET /api/tasks` — list tasks for current user
+- `POST /api/tasks` — create task (`{ title, content }`)
+- `PATCH /api/tasks/toggle` — toggle completion (`{ id }`)
+- `POST /api/tasks/delete` — delete task (`{ id }`)
 
-# Stack
-I used the following stack in my project:
-Frontend: 
-  Next.js and React
-  Tailwind CSS
-  TypeScript
-Backend:
-  Express.js and Node.js
-ORM:
-  Prisma
-DB:
-  PostgreSQL
+## Scripts
+- backend: `npm run dev` — start API with tsx watcher
+- frontend: `npm run dev` — Next dev server; `npm run build && npm run start` for production; `npm run lint` to check linting
 
-  
+## Notes
+- Prisma generates client code to `backend/generated/prisma` (ignored).
+- Request logs are flushed on shutdown to `backend/logs/`.
+- ESModules are used throughout; switching to CommonJS will break imports.
 
 
